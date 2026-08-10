@@ -3,6 +3,12 @@ import { randomBytes } from "node:crypto";
 import { logger, formatError } from "./logger.js";
 
 const TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
+const PUBLIC_ADMIN_PATHS = new Set([
+  "/api/admin-console/ui",
+  "/api/admin-console/app.js",
+  "/api/admin-console/style.css",
+  "/api/admin-console/design-tokens.css",
+]);
 
 export class ManagementServer {
   constructor({ config, apiRouter }) {
@@ -54,6 +60,29 @@ export class ManagementServer {
     }
     if (!url.pathname.startsWith("/api/")) {
       this.sendJson(res, 404, { error: "not found" });
+      return;
+    }
+    if (req.method === "GET" && PUBLIC_ADMIN_PATHS.has(url.pathname)) {
+      const handled = await this.apiRouter.dispatch(req, res, url, {
+        sendJson: (status, data) => this.sendJson(res, status, data),
+        sendHtml: (status, html) => this.sendHtml(res, status, html),
+      });
+      if (!handled) {
+        this.sendJson(res, 404, { error: "not found" });
+      }
+      return;
+    }
+    if (
+      req.method === "GET" &&
+      /^\/api\/plugins\/[^/]+\/admin\//.test(url.pathname)
+    ) {
+      const handled = await this.apiRouter.dispatch(req, res, url, {
+        sendJson: (status, data) => this.sendJson(res, status, data),
+        sendHtml: (status, html) => this.sendHtml(res, status, html),
+      });
+      if (!handled) {
+        this.sendJson(res, 404, { error: "not found" });
+      }
       return;
     }
     if (!this.checkToken(req)) {

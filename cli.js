@@ -13,6 +13,7 @@ import { Scheduler } from "./src/core/scheduler.js";
 import { PluginRegistry } from "./src/core/plugin-registry.js";
 import { PluginManager } from "./src/core/plugin-manager.js";
 import { SecretsStore } from "./src/core/secrets.js";
+import { PluginConfigStore } from "./src/core/plugin-config.js";
 import { FrameworkRuntime } from "./src/core/runtime.js";
 import { ProtocolBridge } from "./src/core/protocol-bridge.js";
 
@@ -33,6 +34,10 @@ const scheduler = new Scheduler({
   isPaused: () => runtime.paused,
 });
 const secrets = new SecretsStore(config.secretsDir);
+const pluginConfig = new PluginConfigStore({
+  dataDir: config.pluginDataDir,
+  secrets,
+});
 const registry = new PluginRegistry();
 const protocolBridge = new ProtocolBridge();
 const pluginManager = new PluginManager({
@@ -46,6 +51,7 @@ const pluginManager = new PluginManager({
     taskStore,
     registry,
     secrets,
+    pluginConfig,
     logger,
     manifest,
     runtime,

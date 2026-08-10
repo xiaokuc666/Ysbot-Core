@@ -146,6 +146,7 @@ ctx = {
   taskStore,
   registry,
   secrets,
+  pluginConfig,
   logger,
   manifest,
   runtime,
@@ -177,6 +178,48 @@ await fs.writeFile(`${ctx.dataDir}/cache.json`, "{}");
 - `cli.js`
 - Core 配置文件
 - 其他插件的 `dataDir`
+
+## 插件配置
+
+插件可以通过 `ctx.pluginConfig` 读写普通配置和密钥。
+
+普通配置保存在插件的数据目录：
+
+```text
+data/plugins/<pluginId>/config.json
+```
+
+密钥保存在独立的密钥目录：
+
+```text
+data/secrets/<pluginId>.json
+```
+
+接口：
+
+```js
+await ctx.pluginConfig.get(pluginId, schema);
+await ctx.pluginConfig.set(pluginId, values, schema);
+await ctx.pluginConfig.reset(pluginId, schema);
+await ctx.pluginConfig.validate(pluginId, values, schema);
+
+await ctx.pluginConfig.getSecret(pluginId, key);
+await ctx.pluginConfig.hasSecret(pluginId, key);
+await ctx.pluginConfig.setSecret(pluginId, key, value);
+await ctx.pluginConfig.clearSecret(pluginId, key);
+```
+
+schema 支持：
+
+- `string`
+- `number`
+- `integer`
+- `boolean`
+- `enum`
+- `minimum`
+- `maximum`
+- `default`
+- `required`
 
 ## `.plg` 插件包
 

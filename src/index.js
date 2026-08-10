@@ -8,6 +8,7 @@ import { PluginRegistry } from "./core/plugin-registry.js";
 import { PluginManager } from "./core/plugin-manager.js";
 import { ApiRouter } from "./core/api-router.js";
 import { SecretsStore } from "./core/secrets.js";
+import { PluginConfigStore } from "./core/plugin-config.js";
 import { CuriosityBus } from "./core/curiosity.js";
 import { FrameworkRuntime } from "./core/runtime.js";
 import { ProtocolBridge } from "./core/protocol-bridge.js";
@@ -35,6 +36,10 @@ const scheduler = new Scheduler({
 
 const plugins = new PluginRegistry();
 const secrets = new SecretsStore(config.secretsDir);
+const pluginConfig = new PluginConfigStore({
+  dataDir: config.pluginDataDir,
+  secrets,
+});
 const pluginManager = new PluginManager({
   registry: plugins,
   pluginDir: config.pluginDir,
@@ -46,6 +51,7 @@ const pluginManager = new PluginManager({
     taskStore,
     registry: plugins,
     secrets,
+    pluginConfig,
     logger,
     manifest,
     runtime,
