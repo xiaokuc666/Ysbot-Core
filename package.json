@@ -1,6 +1,6 @@
 {
   "name": "@xiaokuc/ysbot",
-  "version": "2.0.1",
+  "version": "0.2.2",
   "private": false,
   "type": "module",
   "description": "YSbot core: plugin runtime, task scheduler, curiosity bus and protocol bridge.",
