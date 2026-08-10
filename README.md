@@ -23,6 +23,7 @@ YSbot Core
 ```text
 ysbot/
   cli.js
+  README.md
   src/
     index.js
     config.js
@@ -42,8 +43,8 @@ ysbot/
       curiosity.js
       runtime.js
   docs/
-    README.md
     .env.example
+    plugin-dev-guide.md
 ```
 
 ## 启动
@@ -97,7 +98,7 @@ Copy-Item docs\.env.example .env
 
 YSbot Core 支持插件目录和 `.plg` 插件包。
 
-插件开发规范见：[plugin-dev-guide.md](plugin-dev-guide.md)
+插件开发规范见：[docs/plugin-dev-guide.md](docs/plugin-dev-guide.md)
 
 插件类型：
 
@@ -194,7 +195,7 @@ npm pack
 
 ## License
 
-YSbot Core 使用 [MIT License](../../LICENSE)。
+YSbot Core 使用 [MIT License](LICENSE)。
 
 你可以自由使用、修改、分发和商用，但需要保留版权声明，并且不提供任何担保。
 

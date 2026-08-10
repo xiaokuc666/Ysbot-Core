@@ -13,7 +13,7 @@
     "cli.js",
     "run.bat",
     "src",
-    "docs/README.md",
+    "README.md",
     "docs/.env.example",
     "docs/plugin-dev-guide.md",
     "LICENSE"
