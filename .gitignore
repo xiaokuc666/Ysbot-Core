@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+data/
+*.log
+*.stdout.log
+*.stderr.log
+*.tgz
+plugins/.cache/
+.cache/
+.DS_Store
+Thumbs.db
+coverage/
+.nyc_output/
+npm-debug.log*

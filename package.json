@@ -1,0 +1,56 @@
+{
+  "name": "ysbot",
+  "version": "0.2.0",
+  "private": false,
+  "type": "module",
+  "description": "YSbot core: plugin runtime, task scheduler, curiosity bus and protocol bridge.",
+  "main": "src/index.js",
+  "bin": {
+    "ysbot": "./cli.js"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./cli": "./cli.js"
+  },
+  "files": [
+    "cli.js",
+    "run.bat",
+    "src",
+    "docs/README.md",
+    "docs/.env.example",
+    "docs/plugin-dev-guide.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node src/index.js",
+    "cli": "node cli.js",
+    "launcher": "node cli.js",
+    "prepublishOnly": "npm run check && npm test",
+    "test": "node --test",
+    "check": "node --check cli.js && node --check src/config.js && node --check src/logger.js && node --check src/server.js && node --check src/index.js && node --check src/core/event-bus.js && node --check src/core/api-router.js && node --check src/core/task-store.js && node --check src/core/scheduler.js && node --check src/core/plugin-registry.js && node --check src/core/plugin-loader.js && node --check src/core/plugin-manager.js && node --check src/core/plg.js && node --check src/core/protocol-bridge.js && node --check src/core/secrets.js && node --check src/core/curiosity.js && node --check src/core/runtime.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "ysbot",
+    "qq",
+    "onebot",
+    "snowluma",
+    "plugin",
+    "bot"
+  ],
+  "author": "xiaokuc666",
+  "license": "MIT",
+  "homepage": "https://github.com/xiaokuc666/Ysbot-Core",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaokuc666/Ysbot-Core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xiaokuc666/Ysbot-Core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
