@@ -1,5 +1,5 @@
 {
-  "name": "ysbot",
+  "name": "@xiaokuc/ysbot",
   "version": "0.2.0",
   "private": false,
   "type": "module",
