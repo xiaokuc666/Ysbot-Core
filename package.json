@@ -5,9 +5,6 @@
   "type": "module",
   "description": "YSbot core: plugin runtime, task scheduler, curiosity bus and protocol bridge.",
   "main": "src/index.js",
-  "bin": {
-    "ysbot": "./cli.js"
-  },
   "exports": {
     ".": "./src/index.js",
     "./cli": "./cli.js"
