@@ -5,7 +5,14 @@ import { extractPlg, hashFile, readPlgFile } from "./plg.js";
 import { logger, formatError } from "../logger.js";
 
 export class PluginManager {
-  constructor({ registry, pluginDir, cacheDir, dataDir, contextFactory }) {
+  constructor({
+    registry,
+    pluginDir,
+    cacheDir,
+    dataDir,
+    contextFactory,
+    permissions = null,
+  }) {
     this.registry = registry;
     this.pluginDir = pluginDir;
     this.cacheDir = cacheDir;
@@ -13,6 +20,7 @@ export class PluginManager {
     this.pluginLoader = new PluginLoader({
       registry,
       contextFactory,
+      permissions,
     });
     this.sources = new Map();
   }

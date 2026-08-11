@@ -35,10 +35,31 @@ export function validatePluginManifest(manifest) {
         errors.push("permissions.adminOnly 必须是布尔值");
       }
       if (
+        manifest.permissions.mode !== undefined &&
+        !["manifest", "allow-all", "deny-all"].includes(
+          manifest.permissions.mode,
+        )
+      ) {
+        errors.push("permissions.mode 必须是 manifest/allow-all/deny-all");
+      }
+      if (
         manifest.permissions.enabledGroups !== undefined &&
         !Array.isArray(manifest.permissions.enabledGroups)
       ) {
         errors.push("permissions.enabledGroups 必须是数组");
+      }
+      for (const key of [
+        "disabledGroups",
+        "allowedUsers",
+        "blockedUsers",
+        "requiredRoles",
+      ]) {
+        if (
+          manifest.permissions[key] !== undefined &&
+          !Array.isArray(manifest.permissions[key])
+        ) {
+          errors.push(`permissions.${key} 必须是数组`);
+        }
       }
     }
   }
@@ -66,9 +87,10 @@ export function validatePluginManifest(manifest) {
 }
 
 export class PluginLoader {
-  constructor({ registry, contextFactory }) {
+  constructor({ registry, contextFactory, permissions = null }) {
     this.registry = registry;
     this.contextFactory = contextFactory;
+    this.permissions = permissions;
   }
 
   async loadDir(dir) {
@@ -121,6 +143,7 @@ export class PluginLoader {
       }
       throw error;
     }
+    const permissions = this.permissions;
     const wrapper = {
       id: manifest.id,
       type: manifest.type,
@@ -144,6 +167,14 @@ export class PluginLoader {
       },
       async consume(event, callContext = {}) {
         if (typeof instance.consume !== "function") return;
+        if (permissions) {
+          const permissionContext = { ...event, ...callContext };
+          if (!permissionContext.action) permissionContext.action = "consume";
+          await permissions.assert(
+            manifest.id,
+            permissions.buildRequest(manifest.id, permissionContext),
+          );
+        }
         return instance.consume(event, callContext);
       },
       async decide(context) {

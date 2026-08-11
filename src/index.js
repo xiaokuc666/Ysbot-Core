@@ -9,6 +9,7 @@ import { PluginManager } from "./core/plugin-manager.js";
 import { ApiRouter } from "./core/api-router.js";
 import { SecretsStore } from "./core/secrets.js";
 import { PluginConfigStore } from "./core/plugin-config.js";
+import { PermissionService } from "./core/permission-service.js";
 import { CuriosityBus } from "./core/curiosity.js";
 import { FrameworkRuntime } from "./core/runtime.js";
 import { ProtocolBridge } from "./core/protocol-bridge.js";
@@ -35,6 +36,13 @@ const scheduler = new Scheduler({
 });
 
 const plugins = new PluginRegistry();
+const permissions = new PermissionService({
+  registry: plugins,
+  filePath: path.join(config.dataDir, "state", "permissions.json"),
+  logger,
+});
+await permissions.init();
+plugins.setPermissionService(permissions);
 const secrets = new SecretsStore(config.secretsDir);
 const pluginConfig = new PluginConfigStore({
   dataDir: config.pluginDataDir,
@@ -45,6 +53,7 @@ const pluginManager = new PluginManager({
   pluginDir: config.pluginDir,
   cacheDir: config.pluginCacheDir,
   dataDir: config.pluginDataDir,
+  permissions,
   contextFactory: (manifest) => ({
     config,
     eventBus,
@@ -52,6 +61,7 @@ const pluginManager = new PluginManager({
     registry: plugins,
     secrets,
     pluginConfig,
+    permissions,
     logger,
     manifest,
     runtime,

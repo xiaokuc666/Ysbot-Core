@@ -37,3 +37,20 @@ test("plugin config store merges defaults, validates and stores secrets", async 
     /must be an integer/,
   );
 });
+test("plugin config store rejects corrupted json", async (t) => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "ysbot-badconfig-"));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const secrets = new SecretsStore(path.join(root, "secrets"));
+  const store = new PluginConfigStore({
+    dataDir: path.join(root, "plugins"),
+    secrets,
+  });
+  const pluginDir = path.join(root, "plugins", "demo");
+  await fs.mkdir(pluginDir, { recursive: true });
+  await fs.writeFile(path.join(pluginDir, "config.json"), "{broken", "utf8");
+
+  await assert.rejects(
+    store.get("demo", {}),
+    (error) => error.code === "CONFIG_CORRUPTED" && /Config file corrupted/.test(error.message),
+  );
+});

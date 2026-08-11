@@ -14,6 +14,7 @@ import { PluginRegistry } from "./src/core/plugin-registry.js";
 import { PluginManager } from "./src/core/plugin-manager.js";
 import { SecretsStore } from "./src/core/secrets.js";
 import { PluginConfigStore } from "./src/core/plugin-config.js";
+import { PermissionService } from "./src/core/permission-service.js";
 import { FrameworkRuntime } from "./src/core/runtime.js";
 import { ProtocolBridge } from "./src/core/protocol-bridge.js";
 
@@ -39,12 +40,20 @@ const pluginConfig = new PluginConfigStore({
   secrets,
 });
 const registry = new PluginRegistry();
+const permissions = new PermissionService({
+  registry,
+  filePath: path.join(config.dataDir, "state", "permissions.json"),
+  logger,
+});
+await permissions.init();
+registry.setPermissionService(permissions);
 const protocolBridge = new ProtocolBridge();
 const pluginManager = new PluginManager({
   registry,
   pluginDir: config.pluginDir,
   cacheDir: config.pluginCacheDir,
   dataDir: config.pluginDataDir,
+  permissions,
   contextFactory: (manifest) => ({
     config,
     eventBus,
@@ -52,6 +61,7 @@ const pluginManager = new PluginManager({
     registry,
     secrets,
     pluginConfig,
+    permissions,
     logger,
     manifest,
     runtime,

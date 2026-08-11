@@ -52,6 +52,7 @@ Copy-Item docs\.env.example .env
 - `YSBOT_PLUGIN_CACHE_DIR`：插件缓存目录
 - `YSBOT_DATA_DIR`：数据目录
 - `YSBOT_SECRETS_DIR`：插件密钥目录
+- `YSBOT_PLUGIN_DATA_DIR`：插件数据目录
 
 ## 插件
 
@@ -72,6 +73,19 @@ YSbot Core 支持插件目录和 `.plg` 插件包。
 ```text
 docs/plugin-dev-guide.md
 ```
+
+## 权限
+
+Core 内置基础 PermissionService，插件可以通过 `ctx.permissions` 声明和执行权限规则。
+
+`plugin.json` 的 `permissions` 支持：
+
+- `adminOnly`：仅管理员可用
+- `enabledGroups` / `disabledGroups`：群白名单 / 黑名单
+- `allowedUsers` / `blockedUsers`：用户白名单 / 黑名单
+- `requiredRoles`：必需角色
+
+管理端身份和 QQ 用户身份分离，权限覆盖只能由管理端身份修改。
 
 ## 协议
 

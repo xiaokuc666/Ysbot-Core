@@ -81,10 +81,18 @@ export class PluginConfigStore {
   }
 
   async get(pluginId, schema = {}) {
-    let raw = {};
+    let raw;
     try {
       raw = JSON.parse(await fs.readFile(this.file(pluginId), "utf8"));
-    } catch {
+    } catch (error) {
+      if (error?.code !== "ENOENT") {
+        const wrapped = new Error(
+          `Config file corrupted for ${pluginId}: ${error.message}`,
+        );
+        wrapped.code = "CONFIG_CORRUPTED";
+        wrapped.cause = error;
+        throw wrapped;
+      }
       raw = {};
     }
     this.validate(pluginId, raw, schema);

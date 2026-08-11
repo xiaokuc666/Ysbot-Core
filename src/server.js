@@ -30,11 +30,14 @@ export class ManagementServer {
       this.server.listen(
         this.config.managementPort,
         this.config.managementHost,
-        resolve,
+        () => {
+          this.port = this.server.address().port;
+          resolve();
+        },
       );
     });
     logger.info(
-      `[Server] listening http://${this.config.managementHost}:${this.config.managementPort}`,
+      `[Server] listening http://${this.config.managementHost}:${this.port}`,
     );
   }
 
@@ -63,19 +66,6 @@ export class ManagementServer {
       return;
     }
     if (req.method === "GET" && PUBLIC_ADMIN_PATHS.has(url.pathname)) {
-      const handled = await this.apiRouter.dispatch(req, res, url, {
-        sendJson: (status, data) => this.sendJson(res, status, data),
-        sendHtml: (status, html) => this.sendHtml(res, status, html),
-      });
-      if (!handled) {
-        this.sendJson(res, 404, { error: "not found" });
-      }
-      return;
-    }
-    if (
-      req.method === "GET" &&
-      /^\/api\/plugins\/[^/]+\/admin\//.test(url.pathname)
-    ) {
       const handled = await this.apiRouter.dispatch(req, res, url, {
         sendJson: (status, data) => this.sendJson(res, status, data),
         sendHtml: (status, html) => this.sendHtml(res, status, html),

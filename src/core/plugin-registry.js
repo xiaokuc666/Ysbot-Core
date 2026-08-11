@@ -1,8 +1,13 @@
 import { logger, formatError } from "../logger.js";
 
 export class PluginRegistry {
-  constructor() {
+  constructor({ permissions = null } = {}) {
     this.plugins = new Map();
+    this.permissions = permissions;
+  }
+
+  setPermissionService(permissions) {
+    this.permissions = permissions;
   }
 
   register(plugin) {
@@ -59,6 +64,12 @@ export class PluginRegistry {
     }
     if (typeof plugin.invoke !== "function") {
       throw new Error(`插件不支持 invoke: ${id}`);
+    }
+    if (this.permissions) {
+      await this.permissions.assert(
+        id,
+        this.permissions.buildRequest(id, context),
+      );
     }
     try {
       return await plugin.invoke(params, context);

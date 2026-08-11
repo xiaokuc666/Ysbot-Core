@@ -8,6 +8,7 @@ data/
 *.stderr.log
 *.tgz
 plugins/.cache/
+plugins/*.plg
 .cache/
 .DS_Store
 Thumbs.db

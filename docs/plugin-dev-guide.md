@@ -56,8 +56,13 @@ ctx.sourceType  // directory 或 plg
     "base-plugin"
   ],
   "permissions": {
+    "mode": "manifest",
     "adminOnly": false,
-    "enabledGroups": []
+    "enabledGroups": [],
+    "disabledGroups": [],
+    "allowedUsers": [],
+    "blockedUsers": [],
+    "requiredRoles": []
   },
   "inputSchema": {},
   "outputSchema": {}
@@ -76,8 +81,13 @@ ctx.sourceType  // directory 或 plg
 | `enabled` | 否 | 默认 `true` |
 | `role` | 否 | 例如 `admin` |
 | `dependencies` | 否 | 前置插件 ID 数组 |
+| `permissions.mode` | 否 | `manifest`、`allow-all` 或 `deny-all` |
 | `permissions.adminOnly` | 否 | 是否仅管理员可用 |
 | `permissions.enabledGroups` | 否 | 可用群列表 |
+| `permissions.disabledGroups` | 否 | 禁用的群列表 |
+| `permissions.allowedUsers` | 否 | 允许的用户 ID 列表 |
+| `permissions.blockedUsers` | 否 | 禁止的用户 ID 列表 |
+| `permissions.requiredRoles` | 否 | 必须至少拥有其中一个角色 |
 | `inputSchema` | 否 | 输入 JSON Schema |
 | `outputSchema` | 否 | 输出 JSON Schema |
 
@@ -111,6 +121,64 @@ Core 加载完所有插件后会检查依赖：
 
 - 前置插件存在且状态为 `ready`：通过。
 - 前置插件不存在、禁用或加载失败：当前插件会被标记为失败并卸载。
+
+## 权限模型
+
+Core 通过 `ctx.permissions` 提供基础权限服务：
+
+```js
+await ctx.permissions.can("my-plugin", request);
+await ctx.permissions.assert("my-plugin", request);
+ctx.permissions.snapshot("my-plugin");
+```
+
+权限请求示例：
+
+```js
+{
+  actor: {
+    id: "3512730060",
+    origin: "qq",
+    admin: false,
+    roles: ["member"]
+  },
+  scene: {
+    type: "group",
+    id: "957302634"
+  },
+  resource: {
+    pluginId: "my-plugin",
+    action: "invoke"
+  }
+}
+```
+
+规则判断顺序：
+
+1. `mode` 为 `deny-all` 时直接拒绝。
+2. `blockedUsers` 命中时拒绝。
+3. `adminOnly` 且非管理员时拒绝。
+4. 群黑名单命中时拒绝。
+5. `enabledGroups` 非空且当前群不在列表时拒绝。
+6. `allowedUsers` 非空且当前用户不在列表时拒绝。
+7. `requiredRoles` 非空且角色不匹配时拒绝。
+
+插件没有声明限制时默认允许；声明了限制但请求缺少 `actor` 或 `scene` 时默认拒绝。管理端身份使用 `ctx.permissions.managementActor()`，不和 QQ 用户身份混用。
+
+Core 会在 capability/action 的 `invoke` 和 feedback 的 `consume` 入口自动检查权限，插件内部主动调用其他能力时也可以使用 `ctx.permissions.assert()`。
+
+管理端还可以读取和修改运行时权限覆盖：
+
+```js
+ctx.permissions.listOverrides();
+ctx.permissions.snapshotAll();
+ctx.permissions.setOverride(
+  "my-plugin",
+  { enabledGroups: ["957302634"] },
+  ctx.permissions.managementActor(),
+);
+ctx.permissions.clearOverride("my-plugin", ctx.permissions.managementActor());
+```
 
 ## 插件实现
 
@@ -147,6 +215,7 @@ ctx = {
   registry,
   secrets,
   pluginConfig,
+  permissions,
   logger,
   manifest,
   runtime,
