@@ -216,6 +216,7 @@ ctx = {
   secrets,
   pluginConfig,
   permissions,
+  logging,
   logger,
   manifest,
   runtime,
@@ -247,6 +248,63 @@ await fs.writeFile(`${ctx.dataDir}/cache.json`, "{}");
 - `cli.js`
 - Core 配置文件
 - 其他插件的 `dataDir`
+
+## 日志规范
+
+日志职责边界：
+
+- Core 只负责自己的运行时日志，写入 `data/logs/aibot.jsonl`。
+- 插件日志由插件自己负责，建议写入 `ctx.dataDir/logs/<pluginId>.jsonl`。
+- SL、QQNT、NapCat 等外部组件日志由对应插件或部署层负责，Core 不收集。
+- Core 只提供 `ctx.logging` 接口，插件把自己的日志源注册给 admin-console 等管理插件读取。
+
+统一日志字段：
+
+```json
+{
+  "id": "log-id",
+  "ts": "2026-08-11T15:00:00.000Z",
+  "level": "info",
+  "source": "plugin",
+  "pluginId": "protocol-onebot",
+  "module": "ws-client",
+  "traceId": "trace-1",
+  "message": "send_group_msg ok",
+  "context": {
+    "groupId": "957302634",
+    "userId": "3512730060",
+    "action": "send_group_msg"
+  },
+  "error": null
+}
+```
+
+插件注册日志源：
+
+```js
+const unregister = ctx.logging.register({
+  id: ctx.manifest.id,
+  name: "My Plugin Logs",
+  read: async ({ level, limit, q }) => {
+    return readPluginLogs(ctx, { level, limit, q });
+  },
+  clear: async () => {
+    return clearPluginLogs(ctx);
+  },
+});
+
+// dispose() 时调用
+await unregister();
+```
+
+日志要求：
+
+- 每条日志必须带 `ts`、`level`、`message`。
+- 插件日志必须带 `pluginId`，建议带 `module`。
+- 一条消息进入插件后应生成或复用 `traceId`，并在后续调用中透传。
+- 禁止记录 `accessToken`、`password`、`authorization` 等 secret。
+- 插件自己的日志必须由插件实现轮转和保留策略，Core 不管插件日志文件。
+- `ctx.logger` 只用于 Core 运行时诊断，不替代插件自己的业务日志。
 
 ## 插件配置
 

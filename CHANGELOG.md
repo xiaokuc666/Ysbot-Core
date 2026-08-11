@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.5] - 2026-08-11
+
+### Added
+
+- 新增 `ctx.logging` 日志源注册接口，插件可以把自己的日志源注册给管理端读取。
+- Core logger 支持结构化字段：`source`、`pluginId`、`module`、`traceId`、`context`、`error`。
+- 日志写入时自动脱敏 token、password、authorization 等敏感信息。
+- Core 日志支持按文件大小轮转，并在退出前 flush。
+- 插件开发指南补充完整日志规范，明确 Core、插件、SL/QQNT 日志的职责边界。
+
 ## [0.2.4] - 2026-08-11
 
 ### Added

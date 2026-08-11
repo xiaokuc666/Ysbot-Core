@@ -1,6 +1,7 @@
 import path from "node:path";
 import { loadConfig } from "./config.js";
-import { initLogStore, logger, formatError } from "./logger.js";
+import { initLogStore, flushLogStore, logger, formatError } from "./logger.js";
+import { LoggingRegistry } from "./core/logging.js";
 import { EventBus } from "./core/event-bus.js";
 import { TaskStore } from "./core/task-store.js";
 import { Scheduler } from "./core/scheduler.js";
@@ -27,6 +28,7 @@ const taskStore = new TaskStore(
   path.join(config.dataDir, "state", "tasks.json"),
 );
 await taskStore.init();
+const logging = new LoggingRegistry();
 const apiRouter = new ApiRouter();
 const protocolBridge = new ProtocolBridge();
 const scheduler = new Scheduler({
@@ -62,6 +64,7 @@ const pluginManager = new PluginManager({
     secrets,
     pluginConfig,
     permissions,
+    logging,
     logger,
     manifest,
     runtime,
@@ -142,6 +145,7 @@ async function shutdown(signal) {
   });
   await protocolBridge.dispose().catch(() => {});
   logger.warn("[YSbot] stopped");
+  await flushLogStore().catch(() => {});
   process.exit(signal === "uncaughtException" ? 1 : 0);
 }
 

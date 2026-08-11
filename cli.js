@@ -15,6 +15,7 @@ import { PluginManager } from "./src/core/plugin-manager.js";
 import { SecretsStore } from "./src/core/secrets.js";
 import { PluginConfigStore } from "./src/core/plugin-config.js";
 import { PermissionService } from "./src/core/permission-service.js";
+import { LoggingRegistry } from "./src/core/logging.js";
 import { FrameworkRuntime } from "./src/core/runtime.js";
 import { ProtocolBridge } from "./src/core/protocol-bridge.js";
 
@@ -28,6 +29,7 @@ const taskStore = new TaskStore(
   path.join(config.dataDir, "state", "tasks.json"),
 );
 await taskStore.init();
+const logging = new LoggingRegistry();
 const apiRouter = new ApiRouter();
 const scheduler = new Scheduler({
   taskStore,
@@ -62,6 +64,7 @@ const pluginManager = new PluginManager({
     secrets,
     pluginConfig,
     permissions,
+    logging,
     logger,
     manifest,
     runtime,
