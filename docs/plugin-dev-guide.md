@@ -217,6 +217,7 @@ ctx = {
   pluginConfig,
   permissions,
   logging,
+  curiosity,
   logger,
   manifest,
   runtime,
@@ -230,6 +231,27 @@ ctx = {
   sourceType
 }
 ```
+
+## 好奇心总线
+
+Core 通过 `ctx.curiosity` 提供好奇心机制，插件可以提交动机并监听决策：
+
+```js
+await ctx.curiosity.submit({
+  type: "group_active",
+  groupId: "957302634",
+  cooldownMs: 60000,
+  shouldAct: false,
+  payload: { event, traceId }
+});
+
+ctx.eventBus.on("curiosity.decision", async (decision) => {
+  const { shouldAct, motivation } = decision;
+  // shouldAct=false 时通常只观察/记记忆，不回复。
+});
+```
+
+动机按 `groupId + type` 独立冷却，冷却状态会持久化到 Core 状态文件。
 
 ## 数据目录规范
 

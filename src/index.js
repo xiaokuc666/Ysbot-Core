@@ -36,6 +36,11 @@ const scheduler = new Scheduler({
   tickMs: config.curiosityIntervalMs,
   isPaused: () => runtime.paused,
 });
+const curiosity = new CuriosityBus({
+  eventBus,
+  stateFile: path.join(config.dataDir, "state", "curiosity.json"),
+});
+await curiosity.init();
 
 const plugins = new PluginRegistry();
 const permissions = new PermissionService({
@@ -65,6 +70,7 @@ const pluginManager = new PluginManager({
     pluginConfig,
     permissions,
     logging,
+    curiosity,
     logger,
     manifest,
     runtime,
@@ -84,11 +90,6 @@ const launchPluginIds = skipPlugins
     : null;
 await pluginManager.loadAll({ ids: launchPluginIds });
 
-const curiosity = new CuriosityBus({
-  eventBus,
-  stateFile: path.join(config.dataDir, "state", "curiosity.json"),
-});
-await curiosity.init();
 const server = new ManagementServer({
   config,
   apiRouter,

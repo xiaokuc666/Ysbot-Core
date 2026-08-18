@@ -16,6 +16,7 @@ import { SecretsStore } from "./src/core/secrets.js";
 import { PluginConfigStore } from "./src/core/plugin-config.js";
 import { PermissionService } from "./src/core/permission-service.js";
 import { LoggingRegistry } from "./src/core/logging.js";
+import { CuriosityBus } from "./src/core/curiosity.js";
 import { FrameworkRuntime } from "./src/core/runtime.js";
 import { ProtocolBridge } from "./src/core/protocol-bridge.js";
 
@@ -36,6 +37,11 @@ const scheduler = new Scheduler({
   tickMs: config.curiosityIntervalMs,
   isPaused: () => runtime.paused,
 });
+const curiosity = new CuriosityBus({
+  eventBus,
+  stateFile: path.join(config.dataDir, "state", "curiosity.json"),
+});
+await curiosity.init();
 const secrets = new SecretsStore(config.secretsDir);
 const pluginConfig = new PluginConfigStore({
   dataDir: config.pluginDataDir,
@@ -65,6 +71,7 @@ const pluginManager = new PluginManager({
     pluginConfig,
     permissions,
     logging,
+    curiosity,
     logger,
     manifest,
     runtime,
