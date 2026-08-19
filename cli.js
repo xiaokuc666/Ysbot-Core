@@ -5,83 +5,19 @@ import { spawn } from "node:child_process";
 import readline from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { loadConfig, rootDir } from "./src/config.js";
-import { logger } from "./src/logger.js";
-import { EventBus } from "./src/core/event-bus.js";
-import { ApiRouter } from "./src/core/api-router.js";
-import { TaskStore } from "./src/core/task-store.js";
-import { Scheduler } from "./src/core/scheduler.js";
 import { PluginRegistry } from "./src/core/plugin-registry.js";
 import { PluginManager } from "./src/core/plugin-manager.js";
-import { SecretsStore } from "./src/core/secrets.js";
-import { PluginConfigStore } from "./src/core/plugin-config.js";
-import { PermissionService } from "./src/core/permission-service.js";
-import { LoggingRegistry } from "./src/core/logging.js";
-import { CuriosityBus } from "./src/core/curiosity.js";
-import { FrameworkRuntime } from "./src/core/runtime.js";
-import { ProtocolBridge } from "./src/core/protocol-bridge.js";
 
 const config = loadConfig();
-const eventBus = new EventBus();
-const runtime = new FrameworkRuntime(
-  path.join(config.dataDir, "state", "framework-runtime.json"),
-);
-await runtime.init();
-const taskStore = new TaskStore(
-  path.join(config.dataDir, "state", "tasks.json"),
-);
-await taskStore.init();
-const logging = new LoggingRegistry();
-const apiRouter = new ApiRouter();
-const scheduler = new Scheduler({
-  taskStore,
-  tickMs: config.curiosityIntervalMs,
-  isPaused: () => runtime.paused,
-});
-const curiosity = new CuriosityBus({
-  eventBus,
-  stateFile: path.join(config.dataDir, "state", "curiosity.json"),
-});
-await curiosity.init();
-const secrets = new SecretsStore(config.secretsDir);
-const pluginConfig = new PluginConfigStore({
-  dataDir: config.pluginDataDir,
-  secrets,
-});
 const registry = new PluginRegistry();
-const permissions = new PermissionService({
-  registry,
-  filePath: path.join(config.dataDir, "state", "permissions.json"),
-  logger,
-});
-await permissions.init();
-registry.setPermissionService(permissions);
-const protocolBridge = new ProtocolBridge();
 const pluginManager = new PluginManager({
   registry,
   pluginDir: config.pluginDir,
   cacheDir: config.pluginCacheDir,
   dataDir: config.pluginDataDir,
-  permissions,
-  contextFactory: (manifest) => ({
-    config,
-    eventBus,
-    taskStore,
-    registry,
-    secrets,
-    pluginConfig,
-    permissions,
-    logging,
-    curiosity,
-    logger,
-    manifest,
-    runtime,
-    scheduler,
-    api: apiRouter,
-    pluginManager,
-    protocol: protocolBridge,
-  }),
+  contextFactory: () => ({}),
 });
-await pluginManager.loadAll();
+const plugins = await pluginManager.listMetadata();
 
 console.log("=== YSbot Launcher ===");
 console.log(`Node ${process.version} | ${process.platform}-${process.arch}`);
@@ -90,27 +26,14 @@ console.log(`OneBot ${config.onebotWsUrl}`);
 console.log(`Admin http://${config.managementHost}:${config.managementPort}`);
 
 console.log("\n插件列表:");
-for (const plugin of registry.list()) {
+for (const plugin of plugins) {
   const role = plugin.role ? ` | ${plugin.role}` : "";
   console.log(
     `- ${plugin.id} [${plugin.type}] ${plugin.name} v${plugin.version} source=${plugin.source}${role}`,
   );
 }
 
-console.log("\n插件环境探测:");
-for (const plugin of registry.list()) {
-  const wrapper = registry.get(plugin.id);
-  if (typeof wrapper?.instance?.probe === "function") {
-    try {
-      const result = await wrapper.instance.probe();
-      console.log(`- ${plugin.id}: ${result.ok ? "OK" : "FAIL"} ${result.message || ""}`);
-    } catch (error) {
-      console.log(`- ${plugin.id}: ERROR ${error.message}`);
-    }
-  }
-}
-
-const adminPlugins = registry.list().filter(
+const adminPlugins = plugins.filter(
   (plugin) => plugin.role === "admin" || plugin.type === "system",
 );
 console.log(
@@ -121,7 +44,6 @@ if (process.argv.includes("--list")) {
   process.exit(0);
 }
 
-const plugins = registry.list();
 const rl = readline.createInterface({ input, output });
 console.log("\n选择启动方式:");
 console.log("0) all 全部插件");

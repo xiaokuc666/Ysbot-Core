@@ -36,6 +36,61 @@ export class PluginManager {
     await this.validateDependencies();
   }
 
+  async listMetadata({ ids = null } = {}) {
+    const selected = ids ? new Set(ids.map((id) => String(id))) : null;
+    const results = [];
+    let entries;
+    try {
+      entries = await fs.readdir(this.pluginDir, { withFileTypes: true });
+    } catch {
+      return results;
+    }
+
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue;
+      try {
+        let manifest;
+        let sourceType;
+        if (entry.isDirectory()) {
+          manifest = JSON.parse(
+            await fs.readFile(
+              path.join(this.pluginDir, entry.name, "plugin.json"),
+              "utf8",
+            ),
+          );
+          sourceType = "directory";
+        } else if (entry.isFile() && entry.name.endsWith(".plg")) {
+          const buffer = await fs.readFile(path.join(this.pluginDir, entry.name));
+          const manifestBuffer = readPlgFile(buffer, "plugin.json");
+          if (!manifestBuffer) continue;
+          manifest = JSON.parse(manifestBuffer.toString("utf8"));
+          sourceType = "plg";
+        } else {
+          continue;
+        }
+
+        validatePluginManifest(manifest);
+        if (selected && !selected.has(String(manifest.id))) continue;
+        results.push({
+          id: manifest.id,
+          type: manifest.type,
+          name: manifest.name || manifest.id,
+          version: manifest.version || "0.0.0",
+          enabled: manifest.enabled !== false,
+          status: manifest.enabled === false ? "disabled" : "ready",
+          source: sourceType,
+          sourceType,
+          role: manifest.role || null,
+          dependencies: manifest.dependencies || [],
+        });
+      } catch {
+        // Skip invalid plugin entries without initializing anything.
+      }
+    }
+
+    return results.sort((a, b) => a.id.localeCompare(b.id));
+  }
+
   async loadDirectories() {
     const entries = await fs.readdir(this.pluginDir, { withFileTypes: true });
     for (const entry of entries) {

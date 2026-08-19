@@ -142,6 +142,59 @@ test("plugin manager can load only selected plugin ids", async (t) => {
   );
 });
 
+test("plugin manager lists metadata without initializing plugins", async (t) => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "ysbot-pm-metadata-"));
+  const pluginDir = path.join(root, "plugins");
+  const cacheDir = path.join(pluginDir, ".cache");
+  const dataDir = path.join(root, "data", "plugins");
+  const markerFile = path.join(root, "init-called.txt");
+  const dir = path.join(pluginDir, "demo");
+  await fs.mkdir(dir, { recursive: true });
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+
+  await fs.writeFile(
+    path.join(dir, "plugin.json"),
+    JSON.stringify({
+      id: "demo",
+      type: "capability",
+      name: "Demo",
+      version: "1.0.0",
+      enabled: true,
+      role: "capability",
+    }),
+    "utf8",
+  );
+  await fs.writeFile(
+    path.join(dir, "index.js"),
+    `import fs from "node:fs/promises";
+export default class DemoPlugin {
+  async init() {
+    await fs.writeFile(${JSON.stringify(markerFile)}, "initialized");
+  }
+}`,
+    "utf8",
+  );
+
+  const registry = new PluginRegistry();
+  const manager = new PluginManager({
+    registry,
+    pluginDir,
+    cacheDir,
+    dataDir,
+    contextFactory: () => ({}),
+  });
+
+  const metadata = await manager.listMetadata();
+  assert.equal(metadata.length, 1);
+  assert.equal(metadata[0].id, "demo");
+  assert.equal(metadata[0].source, "directory");
+  assert.equal(registry.list().length, 0);
+  await assert.rejects(fs.access(markerFile));
+
+  const filtered = await manager.listMetadata({ ids: ["missing"] });
+  assert.equal(filtered.length, 0);
+});
+
 test("plugin manager validates plugin dependencies", async (t) => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "ysbot-pm-dep-"));
   const pluginDir = path.join(root, "plugins");
